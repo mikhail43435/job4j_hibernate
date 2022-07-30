@@ -9,6 +9,8 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.query.Query;
 import ru.job4j.hibernate.model.Student;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -40,6 +42,9 @@ public class HbmRun {
 
             save(Student.of(0, "Student for save", "low", 5));
             displayAll();
+
+            save(Student.of(0, "Student for save", "critical low", 7));
+            findByName("Student for save");
 
             Student studentForPersist = Student.of(0, "Student for persist", "weak", 3);
             persist(studentForPersist);
@@ -78,7 +83,7 @@ public class HbmRun {
         LOGGER.info(String.format("Persisting new student: %s", student));
         Transaction transaction = session.beginTransaction();
         session.persist(student);
-        LOGGER.info(String.format("Id was assigned to the persisting object: %d", student.getId()));
+        LOGGER.info(String.format("Id was assigned to the persisted object: %d", student.getId()));
         transaction.commit();
     }
 
@@ -98,13 +103,16 @@ public class HbmRun {
         return studentFoundedInDB;
     }
 
-    private static Student findByName(String name) {
-        LOGGER.info(String.format("Searching object by name: %s", name));
+    private static List<Student> findByName(String name) {
+        LOGGER.info(String.format("Searching objects by name: %s", name));
+        List<Student> result = new ArrayList<>();
         Query query = session.createQuery("from Student s where s.name = :name");
         query.setParameter("name", name);
-        Student studentFoundedInDB = (Student) query.uniqueResult();
-        LOGGER.info(String.format("Following object was found: %s", studentFoundedInDB.toString()));
-        return studentFoundedInDB;
+        for (Object student : query.list()) {
+            result.add((Student) student);
+        }
+        LOGGER.info(String.format("The following objects were found: %s", result.toString()));
+        return result;
     }
 
     private static void updateById(Student student) {
